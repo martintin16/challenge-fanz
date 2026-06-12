@@ -196,7 +196,7 @@ const formatInitials = (name: string) => {
 
 const suggestion = (texto: string) => {
   inputText.value = texto;
-  nextTick(() => chatInputRef.value?.focus());
+  nextTick(() => sendMessage());
 };
 
 const emptyChat = () => {
