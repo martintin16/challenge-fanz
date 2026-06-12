@@ -4,6 +4,8 @@ Agente interno estilo Amazon Q, conectado al contexto de Fanz. Aprende de la doc
 
 🔗 **[challenge-fanz.vercel.app](https://challenge-fanz.vercel.app)**
 
+> La aplicacion es completamente responsive funciona en desktop, tablet y mobile.
+
 ---
 
 ## Cuenta mock
