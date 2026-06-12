@@ -1,6 +1,7 @@
 <template>
   <div class="flex h-screen bg-gray-950 text-white">
     <ClientSidebar
+      v-model="sidebarOpen"
       title="Cuenta Mock"
       :name="clientName"
       footer-text="Powered by Fanz"
@@ -41,9 +42,17 @@
     <main class="chat-main">
       <div class="chat-header">
         <div class="chat-header_info">
+          <button
+            class="md:hidden text-gray-400 hover:text-white p-1 mr-1"
+            @click="sidebarOpen = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <div class="chat-header_status-dot"></div>
           <span class="chat-header_name">Fanzly</span>
-          <span class="chat-header_subtitle">Asistente interno</span>
+          <span class="chat-header_subtitle hidden sm:inline">Asistente interno</span>
         </div>
         <Button @click="emptyChat" label="Nueva conversacion" />
       </div>
@@ -57,7 +66,7 @@
               Preguntame sobre Fanz o pedime que haga algo con tu cuenta.
             </p>
           </div>
-          <div class="flex flex-wrap gap-2 justify-center max-w-lg mt-2">
+          <div class="flex flex-wrap gap-2 justify-center w-full max-w-lg mt-2">
             <Button
               v-for="sug in suggestions"
               @click="suggestion(sug)"
@@ -89,6 +98,7 @@
                   ? 'bg-purple-600 text-white rounded-tr-sm'
                   : 'bg-gray-800 text-gray-100 rounded-tl-sm'
               "
+              style="word-break: break-word;"
             >
               <div v-html="formatMessage(msg.content)"></div>
             </div>
@@ -158,6 +168,7 @@ const isLoading = ref(false);
 const inputText = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const chatInputRef = ref<{ focus: () => void } | null>(null);
+const sidebarOpen = ref(false);
 
 const suggestions = [
   "¿Cómo creo un evento?",
@@ -306,7 +317,7 @@ onMounted(async () => {
 }
 
 .chat-header {
-  @apply flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-gray-900;
+  @apply flex items-center justify-between px-3 sm:px-6 py-3 border-b border-gray-800 bg-gray-900;
 }
 .chat-header_info {
   @apply flex items-center gap-2;
@@ -322,7 +333,7 @@ onMounted(async () => {
 }
 
 .chat-messages {
-  @apply flex-1 overflow-y-auto p-6 space-y-4;
+  @apply flex-1 overflow-y-auto p-3 sm:p-6 space-y-4;
 }
 
 .chat-empty {
@@ -339,7 +350,7 @@ onMounted(async () => {
   @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1;
 }
 .chat-message_bubble {
-  @apply max-w-xl rounded-2xl px-4 py-3 text-sm leading-relaxed;
+  @apply max-w-[80%] sm:max-w-xl rounded-2xl px-4 py-3 text-sm leading-relaxed;
 }
 .chat-message_source {
   @apply mt-2 pt-2 border-t border-gray-700 flex items-center gap-1;

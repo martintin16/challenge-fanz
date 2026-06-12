@@ -19,7 +19,7 @@
         type="tertiary"
       />
     </div>
-    <p class="text-xs text-gray-600 text-center mt-2">
+    <p class="hidden sm:block text-xs text-gray-600 text-center mt-2">
       Enter para enviar · Shift+Enter para nueva línea
     </p>
   </div>
