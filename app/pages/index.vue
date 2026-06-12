@@ -10,19 +10,19 @@
         <InfoCard>
           <div class="flex justify-between text-sm">
             <span class="text-gray-400">Ingresos</span>
-            <span class="font-medium">$2.450.800</span>
+            <span class="font-medium">{{ metricas.ingresos }}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-gray-400">Tickets vendidos</span>
-            <span class="font-medium">1.847</span>
+            <span class="font-medium">{{ metricas.vendidos }}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-gray-400">Eventos activos</span>
-            <span class="font-medium">3</span>
+            <span class="font-medium">{{ metricas.activos }}</span>
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-gray-400">Ticket promedio</span>
-            <span class="font-medium">$1.326</span>
+            <span class="font-medium">{{ metricas.promedio }}</span>
           </div>
         </InfoCard>
       </div>
@@ -30,7 +30,7 @@
       <div class="space-y-2">
         <p class="text-xs text-gray-500 uppercase tracking-wider">Eventos</p>
         <InfoCard
-          v-for="event in mockEvents"
+          v-for="event in events"
           :key="event.id"
           :title="event.name"
           :subtitle="`${event.sold}/${event.capacity} · ${event.status}`"
@@ -91,16 +91,6 @@
               "
             >
               <div v-html="formatMessage(msg.content)"></div>
-
-              <div v-if="msg.source" class="chat-message_source">
-                <span class="text-xs text-gray-400">Fuente:</span>
-                <a
-                  :href="msg.source"
-                  target="_blank"
-                  class="chat-message_source-link"
-                  >{{ msg.source }}</a
-                >
-              </div>
             </div>
           </div>
 
@@ -140,8 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
-import InfoCard from "~/components/global/InfoCard.vue";
+import type { Evento as EventoDB } from "~/types/fanzly-types";
 
 interface Message {
   id: number;
@@ -150,124 +139,31 @@ interface Message {
   source?: string;
 }
 
-interface Event {
+interface EventoSidebar {
   id: number;
   name: string;
   sold: number;
   capacity: number;
   status: "activo" | "finalizado";
+  price: number;
 }
 
-const mockEvents: Event[] = [
-  {
-    id: 1,
-    name: "Festival de Verano 2026",
-    sold: 620,
-    capacity: 1000,
-    status: "activo",
-  },
-  {
-    id: 2,
-    name: "Noche de Jazz & Blues",
-    sold: 340,
-    capacity: 500,
-    status: "activo",
-  },
-  {
-    id: 3,
-    name: "Congreso Tech 2026",
-    sold: 185,
-    capacity: 300,
-    status: "activo",
-  },
-  {
-    id: 4,
-    name: "Show de Comedia",
-    sold: 200,
-    capacity: 200,
-    status: "finalizado",
-  },
-];
+const { $fanzlyApi } = useNuxtApp();
 
-// Respuestas mock del agente para simular el backend
-const mockRespuestas: Record<
-  string,
-  { steps: string[]; response: string; source?: string }
-> = {
-  default: {
-    steps: [
-      "🔍 Buscando en documentación...",
-      "✅ Encontré información relevante",
-    ],
-    response:
-      "Estoy en modo demo sin backend conectado. Puedo mostrarte cómo funciona la interfaz, pero las respuestas reales vendrán del agente cuando conectes el backend.",
-  },
-  evento: {
-    steps: ["⚙️ Ejecutando: ver_eventos...", "✅ Datos cargados"],
-    response:
-      "Estos son los eventos de tu cuenta:\n\n** Festival de Verano 2026** — 620/1000 vendidos · $5.000 c/u\n** Noche de Jazz & Blues** — 340/500 vendidos · $3.500 c/u\n** Congreso Tech 2026** — 185/300 vendidos · $8.000 c/u\n** Show de Comedia** — 200/200 vendidos · Finalizado",
-  },
-  ventas: {
-    steps: ["⚙️ Ejecutando: ver_ventas_evento...", "✅ Datos cargados"],
-    response:
-      "**Ventas — Festival de Verano 2026**\n\nTotal recaudado: **$3.100.000**\nEntradas vendidas: **620 / 1000**\nOcupación: **62%**\n\nÚltimas ventas:\n- María García · $5.000 · 10 ene\n- Carlos López · $10.000 (x2) · 11 ene\n- Ana Martínez · $5.000 · 12 ene",
-  },
-  precio: {
-    steps: [
-      "🔍 Buscando en documentación...",
-      "✅ Encontré información relevante",
-    ],
-    response:
-      "Fanz cobra **8,26% + IVA** por entrada vendida. Es una tarifa única para todos los volúmenes, sin setup ni mensualidad mínima. El dinero va directo a tu cuenta a través de MercadoPago, Stripe o DLocal.",
-    source: "https://fanz.com.ar/precio",
-  },
-  crear: {
-    steps: [
-      "🔍 Buscando en documentación...",
-      "✅ Encontré información relevante",
-    ],
-    response:
-      'Para crear un evento en Fanz:\n\n1. Ingresá al panel en **panel.fanz.com.ar**\n2. Hacé clic en **"Crear evento"**\n3. Completá nombre, fecha, descripción y tipos de entrada\n4. Configurá el método de pago\n5. Publicá y compartí el link\n\nTodo el proceso toma menos de 5 minutos.',
-    source: "https://ayuda.fanz.com.ar",
-  },
-  mercadopago: {
-    steps: [
-      "🔍 Buscando en documentación...",
-      "✅ Encontré información relevante",
-    ],
-    response:
-      'Para conectar MercadoPago:\n\n1. Andá a **Configuración → Pagos** en tu panel\n2. Seleccioná MercadoPago como procesador\n3. Hacé clic en **"Conectar cuenta"** y autorizá el acceso\n4. Listo — los cobros irán directo a tu cuenta de MP\n\nTambién podés usar Stripe o DLocal si operás fuera de LATAM.',
-    source: "https://ayuda.fanz.com.ar",
-  },
-  resumen: {
-    steps: ["⚙️ Ejecutando: resumen_cuenta...", "✅ Datos cargados"],
-    response:
-      "**Resumen de tu cuenta — últimos 30 días**\n\nIngresos netos: **$2.450.800**\nTickets vendidos: **1.847**\nTicket promedio: **$1.326**\nEventos activos: **3**\nCompras totales: **360**\n\nEvento más vendido: 🎪 Festival de Verano 2026 con $980K recaudados.",
-  },
-  ai: {
-    steps: [
-      "🔍 Buscando en documentación...",
-      "✅ Encontré información relevante",
-    ],
-    response:
-      "**Fanz AI** es el copiloto de inteligencia artificial de la plataforma. Incluye 7 capacidades:\n\n- **Sitio web con IA** — generá tu página con un prompt\n- **Soporte omnicanal** — Email, WhatsApp e Instagram automáticos\n- **Campañas** — marketing que se lanza y mejora solo\n- **Textos** — descripciones y copy en segundos\n- **Guía 24/7** — responde preguntas sobre la plataforma\n- **Segmentación** — agrupá tu audiencia por comportamiento\n- **CMO con IA** — recomendaciones de pricing y ventas\n\nEstá incluido sin costo extra en todos los planes.",
-    source: "https://fanz.com.ar/fanz-ai",
-  },
-};
-
+const clientName = ref("");
+const events = ref<EventoSidebar[]>([]);
 const messages = ref<Message[]>([]);
 const steps = ref<string[]>([]);
 const isLoading = ref(false);
 const inputText = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const chatInputRef = ref<{ focus: () => void } | null>(null);
-const clientName = ref("Martin Iglesias");
 
 const suggestions = [
   "¿Cómo creo un evento?",
-  "Mostrá mis eventos",
+  "¿Puedo crear una web?",
   "¿Cuánto cobra Fanz?",
-  "¿Cómo configuro MercadoPago?",
+  "¿Cómo uso MercadoPago?",
   "Resumen de mi cuenta",
   "¿Qué es Fanz AI?",
 ];
@@ -292,64 +188,10 @@ const formatMessage = (text: string) => {
 
 const formatInitials = (name: string) => {
   const words = name?.trim().split(/\s+/) ?? [];
-
   if (!words.length) return "";
-
   return [words[0]![0], words.length > 1 ? words.at(-1)?.[0] : ""]
     .join("")
     .toUpperCase();
-};
-
-const detectarMock = (texto: string): string => {
-  const t = texto.toLowerCase();
-  if (
-    t.includes("evento") &&
-    (t.includes("mostr") || t.includes("ver") || t.includes("lista"))
-  )
-    return "evento";
-  if (t.includes("venta")) return "ventas";
-  if (
-    t.includes("precio") ||
-    t.includes("cuesta") ||
-    t.includes("cobra") ||
-    t.includes("tarifa")
-  )
-    return "precio";
-  if (
-    t.includes("crear") ||
-    t.includes("publicar") ||
-    t.includes("nuevo evento")
-  )
-    return "crear";
-  if (t.includes("mercadopago") || t.includes("pago") || t.includes("cobro"))
-    return "mercadopago";
-  if (t.includes("resumen") || t.includes("estadística")) return "resumen";
-  if (
-    t.includes("fanz ai") ||
-    t.includes("inteligencia") ||
-    t.includes(" ia") ||
-    t.includes(" ai")
-  )
-    return "ai";
-  return "default";
-};
-
-// Simula delay
-const simularStreaming = async (key: string) => {
-  const mock = mockRespuestas[key];
-  for (const step of mock!.steps) {
-    steps.value.push(step);
-    await scrollToBottom();
-    await new Promise((r) => setTimeout(r, 700));
-  }
-  steps.value = [];
-  messages.value.push({
-    id: Date.now(),
-    role: "assistant",
-    content: mock!.response,
-    source: mock!.source,
-  });
-  await scrollToBottom();
 };
 
 const suggestion = (texto: string) => {
@@ -373,14 +215,89 @@ const sendMessage = async () => {
   steps.value = [];
   await scrollToBottom();
 
-  // Cuando el back este ready cambiar esto
-  // por el fetch real
-  const mockKey = detectarMock(texto);
-  await simularStreaming(mockKey);
-  // ──────────────────────────────────────────────────────────
+  const assistantMsg: Message = {
+    id: Date.now() + 1,
+    role: "assistant",
+    content: "",
+  };
+  messages.value.push(assistantMsg);
 
-  isLoading.value = false;
+  const historial = messages.value
+    .filter((m) => m.content !== "")
+    .map((m) => ({ role: m.role, content: m.content }));
+
+  try {
+    await $fanzlyApi.sendMessage(historial, {
+      onStep(text) {
+        steps.value.push(text);
+        scrollToBottom();
+      },
+      onResponse(text, source) {
+        steps.value = [];
+        const idx = messages.value.findIndex((m) => m.id === assistantMsg.id);
+        const msg = messages.value[idx];
+        if (idx !== -1 && msg) {
+          msg.content = text;
+          if (source) msg.source = source;
+        }
+        scrollToBottom();
+      },
+      onError(text) {
+        steps.value = [];
+        const idx = messages.value.findIndex((m) => m.id === assistantMsg.id);
+        const msg = messages.value[idx];
+        if (idx !== -1 && msg) {
+          msg.content = text;
+        }
+        scrollToBottom();
+      },
+    });
+  } catch {
+    const idx = messages.value.findIndex((m) => m.id === assistantMsg.id);
+    const msg = messages.value[idx];
+    if (idx !== -1 && msg) {
+      msg.content =
+        "Error al conectar con el servidor. Verificá que el backend esté corriendo.";
+    }
+  } finally {
+    isLoading.value = false;
+    steps.value = [];
+  }
 };
+
+const metricas = computed(() => {
+  const activos = events.value.filter((e) => e.status === "activo");
+  const totalVendidos = events.value.reduce((acc, e) => acc + e.sold, 0);
+  const totalIngresos = events.value.reduce(
+    (acc, e) => acc + e.sold * e.price,
+    0,
+  );
+  const ticketPromedio =
+    totalVendidos > 0 ? Math.round(totalIngresos / totalVendidos) : 0;
+
+  return {
+    ingresos: totalIngresos.toLocaleString("es-AR"),
+    vendidos: totalVendidos.toLocaleString("es-AR"),
+    activos: activos.length,
+    promedio: ticketPromedio.toLocaleString("es-AR"),
+  };
+});
+onMounted(async () => {
+  try {
+    const { cuenta, eventos: eventosDB } = await $fanzlyApi.getCuenta();
+    clientName.value = cuenta.nombre;
+    events.value = eventosDB.map((e: EventoDB) => ({
+      id: e.id,
+      name: e.nombre,
+      sold: e.vendidos,
+      capacity: e.capacidad,
+      status: e.estado,
+      price: e.precio,
+    }));
+  } catch {
+    console.error("No se pudo cargar la cuenta");
+  }
+});
 </script>
 
 <style scoped>
